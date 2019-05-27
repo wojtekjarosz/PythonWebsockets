@@ -12,6 +12,26 @@ async def hello(websocket, path):
     sourceCode = await websocket.recv()
     print(f"Received code from client:\n{sourceCode} ")
 
+    # Kompilacja przesłanego kodu
+    isSucces = compileSourceCode(sourceCode)
+
+    if isSucces:
+        # Jesli się udało to widomośc do klienta że sie udało
+        await websocket.send("Successful compilation.")
+    else:
+        # Jeśli sie nie udalo to wiadomość że sie nie udało
+        await websocket.send("Compilation failed.")
+
+
+def compileSourceCode(sourceCode):
+   try:
+       code = compile(sourceCode,"code.py",'exec')
+       #exec(code)      #Wykonanie kodu
+       return True
+   except:
+       print("Nie udało sie spkompilowac kodu.")
+       return False
+
 
 start_server = websockets.serve(hello, 'localhost', 8765)
 

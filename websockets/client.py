@@ -32,5 +32,7 @@ async def hello():
            print(f"Received message from server: {recvInfo}")
            print(f"Sending code to server")
            await websocket.send(source_code)
+           recvInfo = await websocket.recv()
+           print(f"Received message from about compilation: {recvInfo}")
 
 asyncio.get_event_loop().run_until_complete(hello())
