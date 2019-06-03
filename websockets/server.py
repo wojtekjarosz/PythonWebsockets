@@ -1,6 +1,10 @@
 import asyncio
 import websockets
 
+from io import StringIO
+import sys
+
+
 async def hello(websocket, path):
     message = await websocket.recv()
     print(f"Received message from client: {message}")
@@ -24,13 +28,24 @@ async def hello(websocket, path):
 
 
 def compileSourceCode(sourceCode):
-   try:
-       code = compile(sourceCode,"code.py",'exec')
-       #exec(code)      #Wykonanie kodu
-       return True
-   except:
-       print("Nie udało sie spkompilowac kodu.")
-       return False
+    try:
+        code = compile(sourceCode, "code.py", 'exec')
+        # redirect stdout to variable
+        old_stdout = sys.stdout
+        sys.stdout = mystdout = StringIO()
+
+        exec(code)  # Wykonanie kodu
+
+        # restore stdout
+        sys.stdout = old_stdout
+
+        print(mystdout.getvalue())
+
+    except:
+        print("Nie udało sie skompilowac kodu.")
+        return False
+
+    return True
 
 
 start_server = websockets.serve(hello, 'localhost', 8765)
