@@ -4,8 +4,12 @@ import websockets
 from io import StringIO
 import sys
 
+import sqlite3
+from sqlite3 import Error
+
 
 async def hello(websocket, path):
+    initialize_db()
     message = await websocket.recv()
     print(f"Received message from client: {message}")
     greeting = f"Hello!"
@@ -40,6 +44,17 @@ def compileSourceCode(sourceCode):
         sys.stdout = old_stdout
 
         print(mystdout.getvalue())
+        output = mystdout.getvalue()
+
+        # clear projects table
+        # delete_all_projects()
+
+        insert_output(output)
+        select_all_tasks()
+        select_task_by_id(1)
+
+
+
 
     except:
         print("Nie udało sie skompilowac kodu.")
@@ -47,6 +62,144 @@ def compileSourceCode(sourceCode):
 
     return True
 
+
+def create_connection(db_file):
+    """ create a database connection to a database that resides
+        in the memory
+    """
+    try:
+        conn = sqlite3.connect(db_file)
+        print(sqlite3.version)
+        return conn
+    except Error as e:
+        print(e)
+    # finally:
+    #     conn.close()
+
+    return None
+
+
+def create_table(conn, create_table_sql):
+    """ create a table from the create_table_sql statement
+    :param conn: Connection object
+    :param create_table_sql: a CREATE TABLE statement
+    :return:
+    """
+    try:
+        c = conn.cursor()
+        c.execute(create_table_sql)
+    except Error as e:
+        print(e)
+
+
+def create_project(conn, project):
+    """
+    Create a new project into the projects table
+    :param conn:
+    :param project:
+    :return: project id
+    """
+    sql = ''' INSERT INTO projects(name,begin_date,end_date)
+              VALUES(?,?,?) '''
+    cur = conn.cursor()
+    cur.execute(sql, project)
+    return cur.lastrowid
+
+def delete_project(conn, id):
+    """
+    Delete a task by task id
+    :param conn:  Connection to the SQLite database
+    :param id: id of the task
+    :return:
+    """
+    sql = 'DELETE FROM projects WHERE id=?'
+    cur = conn.cursor()
+    cur.execute(sql, (id,))
+
+
+def delete_all_projects():
+    """
+    Delete all rows in the tasks table
+    :param conn: Connection to the SQLite database
+    :return:
+    """
+    conn = create_connection("C:\\sqlite\db\pythonsqlite.db")
+    with conn:
+        sql = 'DELETE FROM projects'
+        cur = conn.cursor()
+        cur.execute(sql)
+        print("Deleting all projects")
+
+def insert_output(output):
+    conn = create_connection("C:\\sqlite\db\pythonsqlite.db")
+    with conn:
+        project = (output, '2015-01-01', '2015-01-30');
+        project_id = create_project(conn, project)
+        print(project_id)
+
+
+
+
+def select_all_tasks():
+    """
+    Query all rows in the tasks table
+    :param conn: the Connection object
+    :return:
+    """
+    conn = create_connection("C:\\sqlite\db\pythonsqlite.db")
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM projects")
+
+    rows = cur.fetchall()
+
+    for row in rows:
+        print(row)
+
+
+def select_task_by_id(id):
+    """
+    Query tasks by priority
+    :param conn: the Connection object
+    :param priority:
+    :return:
+    """
+    conn = create_connection("C:\\sqlite\db\pythonsqlite.db")
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM projects WHERE id=?", (id,))
+
+    rows = cur.fetchall()
+
+    for row in rows:
+        print(row)
+
+def initialize_db():
+    print("Initializing db")
+
+    sql_create_projects_table = """ CREATE TABLE IF NOT EXISTS projects (
+                                           id integer PRIMARY KEY,
+                                           name text NOT NULL,
+                                           begin_date text,
+                                           end_date text
+                                       ); """
+
+    conn = create_connection("C:\\sqlite\db\pythonsqlite.db")
+    if conn is not None:
+        create_table(conn, sql_create_projects_table)
+        print("Created table projects")
+        # create a new project
+        # project = ('Cool App with SQLite & Python', '2015-01-01', '2015-01-30');
+        # project_id = create_project(conn, project)
+        # print(project_id)
+        # project = ('Cool App with SQLite & Python', '2015-01-01', '2015-01-30');
+        # project_id = create_project(conn, project)
+        # print(project_id)
+
+    else:
+        print("Error! Cannot create the database connection")
+
+
+# if __name__ == '__main__':
+#     initialize_db()
 
 start_server = websockets.serve(hello, 'localhost', 8765)
 
