@@ -49,7 +49,7 @@ def compileSourceCode(sourceCode):
         # clear projects table
         # delete_all_projects()
 
-        insert_output(output)
+        insert_output(output, sourceCode)
         select_all_tasks()
         select_task_by_id(1)
 
@@ -99,8 +99,8 @@ def create_project(conn, project):
     :param project:
     :return: project id
     """
-    sql = ''' INSERT INTO projects(name,begin_date,end_date)
-              VALUES(?,?,?) '''
+    sql = ''' INSERT INTO projects(name,begin_date,end_date,code)
+              VALUES(?,?,?,?) '''
     cur = conn.cursor()
     cur.execute(sql, project)
     return cur.lastrowid
@@ -130,14 +130,12 @@ def delete_all_projects():
         cur.execute(sql)
         print("Deleting all projects")
 
-def insert_output(output):
+def insert_output(output, sourceCode):
     conn = create_connection("C:\\sqlite\db\pythonsqlite.db")
     with conn:
-        project = (output, '2015-01-01', '2015-01-30');
+        project = (output, '2015-01-01', '2015-01-30', sourceCode)
         project_id = create_project(conn, project)
         print(project_id)
-
-
 
 
 def select_all_tasks():
@@ -179,7 +177,8 @@ def initialize_db():
                                            id integer PRIMARY KEY,
                                            name text NOT NULL,
                                            begin_date text,
-                                           end_date text
+                                           end_date text,
+                                           code txt
                                        ); """
 
     conn = create_connection("C:\\sqlite\db\pythonsqlite.db")
