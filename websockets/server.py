@@ -29,25 +29,37 @@ async def hello(websocket, path):
     print(f"Received code from client:\n{sourceCode} ")
 
     # Kompilacja przesłanego kodu
-    isSucces = compileSourceCode(sourceCode)
+    output = compileSourceCode(sourceCode)
 
-    if isSucces:
-        # Jesli się udało to widomośc do klienta że sie udało
+    if output:
         await websocket.send("Successful compilation.")
     else:
-        # Jeśli sie nie udalo to wiadomość że sie nie udało
         await websocket.send("Compilation failed.")
 
+    insert_output(output, sourceCode)
+    allProjects = select_all_tasks()
+    raport = generateComparisonRaport(allProjects, sourceCode)
+    print("PRINTING REPORT")
+    print(raport)
+
+    await websocket.send(raport)
 
 
 def compileSourceCode(sourceCode):
+    """"
+    This function attempts to compile the received source code
+    Successful Compilation - returns the results of the compiled source code
+    Compilation Failure - returns empty variable
+    :param sourceCode code to compile
+    :return output results of the compiled code or empty variable
+    """
     try:
         code = compile(sourceCode, "code.py", 'exec')
         # redirect stdout to variable
         old_stdout = sys.stdout
         sys.stdout = mystdout = StringIO()
 
-        exec(code)  # Wykonanie kodu
+        exec(code)
 
         # restore stdout
         sys.stdout = old_stdout
@@ -55,24 +67,19 @@ def compileSourceCode(sourceCode):
         print(mystdout.getvalue())
         output = mystdout.getvalue()
 
+        return output
     except:
-        print("Nie udało sie skompilowac kodu.")
-        return False
-
-    # clear projects table
-    # delete_all_projects()
-
-    insert_output(output, sourceCode)
-    allProjects = select_all_tasks()
-    select_task_by_id(1)
-    raport = generateComparisonRaport(allProjects, sourceCode)
-    print("PRINTING REPORT")
-    print(raport)
-
-    return True
+        print("Compilation failed.")
+        return
 
 
 def generateComparisonRaport(allProjects, sourceCode):
+    """"
+    This function compares the source code with codes stored in the database
+    :param allProjects source codes of all stored projects
+    :param sourceCode code for comparison
+    :return report the comparison report
+    """
     report = "REPORT: \n"
 
     for row in allProjects:
