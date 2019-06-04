@@ -1,5 +1,7 @@
 import asyncio
 import websockets
+import difflib
+import traceback
 
 from io import StringIO
 import sys
@@ -17,7 +19,13 @@ async def hello(websocket, path):
     await websocket.send(greeting)
     print(f"Sending message to client: {greeting}")
 
-    sourceCode = await websocket.recv()
+    try :
+        sourceCode = await websocket.recv()
+
+    except:
+        print("Error while receiving source file")
+        return
+
     print(f"Received code from client:\n{sourceCode} ")
 
     # Kompilacja przesłanego kodu
@@ -29,6 +37,7 @@ async def hello(websocket, path):
     else:
         # Jeśli sie nie udalo to wiadomość że sie nie udało
         await websocket.send("Compilation failed.")
+
 
 
 def compileSourceCode(sourceCode):
@@ -46,21 +55,39 @@ def compileSourceCode(sourceCode):
         print(mystdout.getvalue())
         output = mystdout.getvalue()
 
-        # clear projects table
-        # delete_all_projects()
-
-        insert_output(output, sourceCode)
-        select_all_tasks()
-        select_task_by_id(1)
-
-
-
-
     except:
         print("Nie udało sie skompilowac kodu.")
         return False
 
+    # clear projects table
+    # delete_all_projects()
+
+    insert_output(output, sourceCode)
+    allProjects = select_all_tasks()
+    select_task_by_id(1)
+    raport = generateComparisonRaport(allProjects, sourceCode)
+    print("PRINTING REPORT")
+    print(raport)
+
     return True
+
+
+def generateComparisonRaport(allProjects, sourceCode):
+    report = "REPORT: \n"
+
+    for row in allProjects:
+        print("COMPARE WITH PROJECT_ID: " + str(row[0]))
+        report += "COMPARE WITH: " + str(row[0]) + "\n"
+
+        project = ''.join(row[4]).splitlines(1)
+        source = sourceCode.splitlines(1)
+
+        diff = difflib.ndiff(project, source)
+        results = ''.join(diff)
+        print(results)
+        report += results + "\n\n"
+    report += "THE END\n"
+    return report
 
 
 def create_connection(db_file):
@@ -150,8 +177,11 @@ def select_all_tasks():
 
     rows = cur.fetchall()
 
+    print("All projects: ")
     for row in rows:
         print(row)
+
+    return rows
 
 
 def select_task_by_id(id):
@@ -167,8 +197,6 @@ def select_task_by_id(id):
 
     rows = cur.fetchall()
 
-    for row in rows:
-        print(row)
 
 def initialize_db():
     print("Initializing db")
