@@ -25,14 +25,20 @@ async def hello():
 
         isSuccess = readCode(path)
         if isSuccess:
-           greeting = "Hello!"
-           await websocket.send(greeting)
-           print(f"Sending message to server: {greeting}")
-           recvInfo = await websocket.recv()
-           print(f"Received message from server: {recvInfo}")
-           print(f"Sending code to server")
-           await websocket.send(source_code)
-           recvInfo = await websocket.recv()
-           print(f"Received message from about compilation: {recvInfo}")
+            greeting = "Hello!"
+            await websocket.send(greeting)
+            print(f"Sending message to server: {greeting}")
+            recvInfo = await websocket.recv()
+            print(f"Received message from server: {recvInfo}")
+            print(f"Sending code to server")
+            try:
+                await websocket.send(source_code)
+            except:
+                print("Error while sending source code")
+
+            recvInfo = await websocket.recv()
+            print(f"Received message from about compilation: {recvInfo}")
+            recvInfo = await websocket.recv()
+            print(f"Printing report: \n{recvInfo}")
 
 asyncio.get_event_loop().run_until_complete(hello())
