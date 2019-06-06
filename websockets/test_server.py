@@ -16,6 +16,9 @@ class TestServer(unittest.TestCase):
         conn = pythonsqlite.create_connection(db_file)
         self.assertIsNotNone(conn)
 
+
+
+
     def test_create_project(self):
         conn = pythonsqlite.create_connection(db_file)
         sql = """ CREATE TABLE IF NOT EXISTS projects (
