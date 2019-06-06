@@ -20,7 +20,7 @@ def readCode(name):
 
 async def hello():
     async with websockets.connect(
-            'ws://localhost:8765') as websocket:
+            'ws://192.168.43.243:8765') as websocket:
         path = input("Enter a path to your code file: ")
 
         isSuccess = readCode(path)
