@@ -9,7 +9,6 @@ import sys
 import sqlite3
 from sqlite3 import Error
 
-
 def compile_source_code(sourceCode):
     """"
     This function attempts to compile the received source code
